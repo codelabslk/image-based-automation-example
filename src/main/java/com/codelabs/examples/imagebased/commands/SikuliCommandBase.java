@@ -1,6 +1,7 @@
 package com.codelabs.examples.imagebased.commands;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.sikuli.api.DesktopScreenRegion;
@@ -39,79 +40,74 @@ public class SikuliCommandBase {
 
 		this.openAppName = app;
 	}
-	
 
-	public void type(String fileName, String text) {
+	public ScreenRegion findImageElement(String imageName) throws SikuliRuntimeException, FileNotFoundException {
 
-		ScreenRegion s = new DesktopScreenRegion();
-		File image = new File("images" + File.separator + fileName);
-		Target imageTarget = new ImageTarget(image);
-		ScreenRegion r = s.wait(imageTarget, Constants.IMAGE_COMMAND_TIMEOUT);
+		// Finds the image locator in the images folder in the project
+		File target = getImageFromFile(imageName);
 
-		if (r != null) {
+		// Create a screen region we need to find this target element.
+		ScreenRegion desktopScreen = new DesktopScreenRegion();
+		Target imageTarget = new ImageTarget(target);
+		ScreenRegion targetRegion = desktopScreen.wait(imageTarget, Constants.IMAGE_COMMAND_TIMEOUT);
+		// At this point, if the element is found, the tarhgetRegion will be not null.
 
-			Mouse mouse = new DesktopMouse();
-			mouse.click(r.getCenter());
-			mouse.doubleClick(r.getCenter());
-			Keyboard keyboard = new DesktopKeyboard();
-			keyboard.type(text);
+		if (targetRegion != null) {
+			return targetRegion;
 		} else {
-			throw new SikuliRuntimeException("Cannot find the image in screen. " + fileName);
+			throw new SikuliRuntimeException(
+					"Image element could not be located using the given image locator : " + imageName);
 		}
 
 	}
 
-	public void click(String fileName) {
+	private File getImageFromFile(String imageName) throws FileNotFoundException {
 
-		ScreenRegion s = new DesktopScreenRegion();
-		File image = new File("images" + File.separator + fileName);
-		Target imageTarget = new ImageTarget(image);
-		ScreenRegion r = s.wait(imageTarget, Constants.IMAGE_COMMAND_TIMEOUT);
-
-		if (r != null) {
-
-			Mouse mouse = new DesktopMouse();
-			mouse.click(r.getCenter());
-
+		File image = new File("images" + File.separator + imageName);
+		// Check if the file exists. Else throw an error with the details
+		if (image.exists()) {
+			return image;
 		} else {
-			throw new SikuliRuntimeException("Cannot find the image in screen. " + fileName);
+			throw new FileNotFoundException(imageName + " does not exist in the Images folder");
 		}
 
 	}
 
-	public void doubleClick(String fileName) {
+	public void type(String fileName, String text) throws SikuliRuntimeException, FileNotFoundException {
 
-		ScreenRegion s = new DesktopScreenRegion();
-		File image = new File("images" + File.separator + fileName);
-		Target imageTarget = new ImageTarget(image);
-		ScreenRegion r = s.wait(imageTarget, Constants.IMAGE_COMMAND_TIMEOUT);
+		ScreenRegion targetRegion = findImageElement(fileName);
+		// First lets mimic a user's type action. We click and type on an element right?
+		Mouse mouse = new DesktopMouse();
+		mouse.click(targetRegion.getCenter());
 
-		if (r != null) {
-
-			Mouse mouse = new DesktopMouse();
-			mouse.doubleClick(r.getCenter());
-
-		} else {
-			throw new SikuliRuntimeException("Cannot find the image in screen. " + fileName);
-		}
+		// Now lets type
+		Keyboard keyboard = new DesktopKeyboard();
+		keyboard.type(text);
 
 	}
 
-	public void mouseOver(String fileName) {
+	public void click(String fileName) throws SikuliRuntimeException, FileNotFoundException {
 
-		ScreenRegion s = new DesktopScreenRegion();
-		File image = new File("images" + File.separator + fileName);
-		Target imageTarget = new ImageTarget(image);
-		ScreenRegion r = s.wait(imageTarget, Constants.IMAGE_COMMAND_TIMEOUT);
+		ScreenRegion targetRegion = findImageElement(fileName);
+		Mouse mouse = new DesktopMouse();
+		mouse.click(targetRegion.getCenter());
 
-		if (r != null) {
+	}
 
-			Mouse mouse = new DesktopMouse();
-			mouse.drop(r.getCenter());
+	public void doubleClick(String fileName) throws SikuliRuntimeException, FileNotFoundException {
 
-		} else {
-			throw new SikuliRuntimeException("Cannot find the image in screen. " + fileName);
-		}
+		ScreenRegion targetRegion = findImageElement(fileName);
+		Mouse mouse = new DesktopMouse();
+		mouse.doubleClick(targetRegion.getCenter());
+
+	}
+
+	public void mouseOver(String fileName) throws SikuliRuntimeException, FileNotFoundException {
+
+		ScreenRegion targetRegion = findImageElement(fileName);
+		Mouse mouse = new DesktopMouse();
+
+		mouse.drop(targetRegion.getCenter());
 
 	}
 
@@ -129,39 +125,24 @@ public class SikuliCommandBase {
 
 	}
 
-	public ScreenRegion getRelativeImage(String fileName, int xOffset, int yOffset, int w, int h) {
+	public ScreenRegion getRelativeImage(String fileName, int xOffset, int yOffset, int w, int h)
+			throws SikuliRuntimeException, FileNotFoundException {
 
-		ScreenRegion s = new DesktopScreenRegion();
-		File image = new File("images" + File.separator + fileName);
-		Target imageTarget = new ImageTarget(image);
-		ScreenRegion r = s.wait(imageTarget, Constants.IMAGE_COMMAND_TIMEOUT);
+		ScreenRegion targetRegion = findImageElement(fileName);
 
-		if (r != null) {
+		ScreenRegion relativeImage = targetRegion.getRelativeScreenRegion(xOffset, yOffset, w, h);
 
-			ScreenRegion r1 = r.getRelativeScreenRegion(xOffset, yOffset, w, h);
-			return r1;
-		} else {
-			throw new SikuliRuntimeException("Cannot find the image in screen. " + fileName);
-		}
+		return relativeImage;
 
 	}
 
-	public void clickAt(String fileName, int x, int y) {
+	public void clickAt(String fileName, int x, int y) throws SikuliRuntimeException, FileNotFoundException {
 
-		ScreenRegion s = new DesktopScreenRegion();
-		File image = new File("images" + File.separator + fileName);
-		Target imageTarget = new ImageTarget(image);
-		ScreenRegion r = s.wait(imageTarget, Constants.IMAGE_COMMAND_TIMEOUT);
+		ScreenRegion targetRegion = findImageElement(fileName);
 
-		if (r != null) {
+		Mouse mouse = new DesktopMouse();
 
-			Mouse mouse = new DesktopMouse();
-
-			mouse.click(r.getRelativeScreenLocation(x, y));
-
-		} else {
-			throw new SikuliRuntimeException("Cannot find the image in screen. " + fileName);
-		}
+		mouse.click(targetRegion.getRelativeScreenLocation(x, y));
 
 	}
 
